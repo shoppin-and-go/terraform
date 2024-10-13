@@ -60,9 +60,13 @@ resource "aws_instance" "api_server" {
   }
 }
 
-resource "aws_eip" "db_instance_eip" {
-  vpc = true
-  instance = aws_instance.api_server.id
+data "aws_eip" "api_instance_eip" {
+  id = "eipalloc-01c038c0fb9b76347" // name=api-server-eip
+}
+
+resource "aws_eip_association" "db_instance_eip" {
+  instance_id   = aws_instance.api_server.id
+  allocation_id = data.aws_eip.api_instance_eip.id
 }
 
 output "api_server_host"  {

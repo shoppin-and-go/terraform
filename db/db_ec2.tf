@@ -59,7 +59,11 @@ resource "aws_instance" "db_server" {
   }
 }
 
-resource "aws_eip" "db_instance_eip" {
-  vpc = true
-  instance = aws_instance.db_server.id
+data "aws_eip" "db_instance_eip" {
+  id = "eipalloc-07f60ecd3fde0a85f" // name=db-server-eip
+}
+
+resource "aws_eip_association" "db_instance_eip" {
+  instance_id   = aws_instance.db_server.id
+  allocation_id = data.aws_eip.db_instance_eip.id
 }
