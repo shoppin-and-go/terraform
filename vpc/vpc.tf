@@ -1,19 +1,10 @@
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
+  enable_dns_support = true
+  enable_dns_hostnames = true
 
   tags = {
     Name = "ecs-vpc"
-  }
-}
-
-resource "aws_subnet" "public_subnet" {
-  count             = 2
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = cidrsubnet(aws_vpc.main.cidr_block, 8, count.index)
-  availability_zone = element(["ap-northeast-2a", "ap-northeast-2b"], count.index)
-
-  tags = {
-    Name = "ecs-public-subnet-${count.index + 1}"
   }
 }
 
@@ -22,6 +13,17 @@ resource "aws_internet_gateway" "gw" {
 
   tags = {
     Name = "ecs-igw"
+  }
+}
+
+resource "aws_subnet" "public_subnet" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "ap-northeast-2a"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "ecs-public-subnet"
   }
 }
 
@@ -39,8 +41,7 @@ resource "aws_route_table" "public_route_table" {
 }
 
 resource "aws_route_table_association" "subnet_route" {
-  count          = 2
-  subnet_id      = aws_subnet.public_subnet[count.index].id
+  subnet_id      = aws_subnet.public_subnet.id
   route_table_id = aws_route_table.public_route_table.id
 }
 
@@ -48,6 +49,6 @@ output "vpc_id" {
   value = aws_vpc.main.id
 }
 
-output "public_subnet_ids" {
-  value = aws_subnet.public_subnet[*].id
+output "public_subnet_id" {
+  value = aws_subnet.public_subnet.id
 }

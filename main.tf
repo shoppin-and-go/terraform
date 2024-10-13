@@ -20,29 +20,37 @@ module "iam" {
   source = "./iam"
 }
 
-module "ecs" {
-  source = "./ecs"
-  vpc_id = module.vpc.vpc_id
-  subnet_ids = module.vpc.public_subnet_ids
-  execution_role_arn = module.iam.execution_role_arn
+module "db" {
+  source = "./db"
 
-  cluster_name = "shoppin-and-go-cluster"
-  service_api_name = "inventory-api"
-  service_db_name = "inventory-db"
-  image_repo_url = "public.ecr.aws/e6u1y0g6/shoppin-and-go/inventory-server:latest"
+  vpc_id = module.vpc.vpc_id
+  subnet_id = module.vpc.public_subnet_id
+
+  instance_type = "t4g.micro"
   keypair_name = "mkroo"
-  instance_type = "t4g.nano"
 
   mysql_database = var.mysql_database
   mysql_root_password = var.mysql_root_password
   mysql_user = var.mysql_user
   mysql_password = var.mysql_password
+
+  depends_on = [module.vpc]
 }
 
-output "ecs_cluster_id" {
-  value = module.ecs.cluster_id
-}
 
-output "load_balancer_dns" {
-  value = module.ecs.load_balancer_dns
+module "ecs" {
+  source = "./ecs"
+
+  vpc_id = module.vpc.vpc_id
+  subnet_id = module.vpc.public_subnet_id
+
+  cluster_name = "shoppin-and-go-cluster"
+  service_api_name = "inventory-api"
+  image_repo_url = "public.ecr.aws/e6u1y0g6/shoppin-and-go/inventory-server:latest"
+  execution_role_arn = module.iam.execution_role_arn
+
+  instance_type = "t4g.micro"
+  keypair_name = "mkroo"
+
+  depends_on = [module.vpc, module.db]
 }
